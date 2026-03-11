@@ -10,6 +10,8 @@ conf = ConnectionConfig(
     MAIL_SERVER="smtp.gmail.com",
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True
 )
 
 async def send_verification_email(email: str, code: str):

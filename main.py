@@ -9,6 +9,7 @@ app = FastAPI()
 origins = [
     "http://localhost:8080",  # landing
     "http://localhost:8081",  # hub
+    "http://localhost:8082",  # academy
 ]
 
 app.add_middleware(
