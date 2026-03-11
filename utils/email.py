@@ -14,6 +14,9 @@ conf = ConnectionConfig(
     VALIDATE_CERTS=True
 )
 
+print("MAIL_USERNAME:", os.getenv("MAIL_USERNAME"))
+print("MAIL_PASSWORD:", os.getenv("MAIL_PASSWORD"))
+
 async def send_verification_email(email: str, code: str):
 
     verify_link = f"{FRONTEND_URL}/verify?email={email}&code={code}"
