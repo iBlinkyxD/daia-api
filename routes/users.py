@@ -1,14 +1,59 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 from database import get_db
 
 from models.user import User
+from schemas.user import UpdateProfileRequest, UserResponse
 
 from utils.auth import get_current_user
+
+from services.storage import upload_avatar
+
+import uuid
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/me")
-def get_current_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return {"user": current_user}
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.put("/me", response_model=UserResponse)
+def update_profile(
+    payload: UpdateProfileRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    if payload.first_name:
+        current_user.first_name = payload.first_name
+
+    if payload.last_name:
+        current_user.last_name = payload.last_name
+
+    if payload.phone:
+        current_user.phone = payload.phone
+
+    db.commit()
+    db.refresh(current_user)
+
+    return current_user
+
+@router.post("/me/avatar")
+async def upload_my_avatar(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if file.content_type not in ["image/png", "image/jpeg", "image/webp"]:
+        raise HTTPException(status_code=400, detail="Invalid image type")
+
+    contents = await file.read()
+    filename = f"{current_user.id}/{uuid.uuid4()}.{file.filename.split('.')[-1]}"
+
+    url = upload_avatar(contents, filename, file.content_type)
+
+    current_user.profile_picture_url = url
+    db.commit()
+
+    return {"avatar_url": url}

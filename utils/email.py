@@ -1,18 +1,9 @@
 import os
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+import resend
 from config import FRONTEND_URL
 
-conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=587,
-    MAIL_SERVER="smtp.gmail.com",
-    MAIL_STARTTLS=True,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True
-)
+resend.api_key = os.getenv("RESEND_API_KEY")
+
 
 async def send_verification_email(email: str, code: str):
 
@@ -50,12 +41,11 @@ async def send_verification_email(email: str, code: str):
     </html>
     """
 
-    message = MessageSchema(
-        subject="Verify your account",
-        recipients=[email],
-        body=html_content,
-        subtype="html"
-    )
+    response = resend.Emails.send({
+        "from": os.getenv("RESEND_FROM", "onboarding@resend.dev"),
+        "to": [email],
+        "subject": "Verify your account",
+        "html": html_content
+    })
 
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    return response

@@ -14,6 +14,8 @@ class User(Base):
     
     password = Column(String, nullable=False)
 
+    profile_picture_url = Column(String, nullable=True)
+    
     is_active = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
