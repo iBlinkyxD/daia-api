@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 from database import get_db
 
 from models.user import User
-from schemas.user import UpdateProfileRequest, UserResponse
+from schemas.user import UpdateProfileRequest, UserResponse, ChangePasswordRequest
 
 from utils.auth import get_current_user
+from utils.security import verify_password, hash_password
 
 from services.storage import upload_avatar
 
@@ -57,3 +58,21 @@ async def upload_my_avatar(
     db.commit()
 
     return {"avatar_url": url}
+
+
+@router.post("/change-password")
+def change_password(
+    payload: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    if not verify_password(payload.current_password, current_user.password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    current_user.password = hash_password(payload.new_password)
+
+    db.commit()
+    db.refresh(current_user)
+
+    return {"message": "Password updated successfully"}

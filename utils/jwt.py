@@ -1,3 +1,4 @@
+import uuid
 import os
 from dotenv import load_dotenv
 
@@ -7,11 +8,11 @@ from datetime import datetime, timedelta
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
-def create_access_token(user_id: int):
+def create_access_token(user_id: uuid.UUID) -> str:
     expire = datetime.utcnow() + timedelta(hours=24)
     
     payload = {
-        "user_id": user_id,
+        "sub": str(user_id),  # UUID must be a string in JWT
         "exp": expire
     }
 

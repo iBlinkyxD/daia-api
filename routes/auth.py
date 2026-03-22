@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 import random;
+import os
+import httpx
 
 from sqlalchemy.orm import Session
 
@@ -9,8 +11,9 @@ from database import get_db
 
 from models.user import User
 
-from schemas.user import RegisterUser
+from schemas.user import RegisterUser, RequestEmailChange
 
+from utils.auth import get_current_user
 from utils.security import hash_password, verify_password
 from utils.jwt import create_access_token
 from utils.verification import generate_verification_code
@@ -18,17 +21,19 @@ from utils.email import send_verification_email
 
 router = APIRouter()
 
+ACADEMY_API_URL = os.getenv("ACADEMY_API_URL", "http://localhost:8001")
+INTERNAL_SECRET = os.getenv("INTERNAL_SECRET")
+
+
 @router.post("/register")
 async def register(user: RegisterUser, db: Session = Depends(get_db)):
 
     # Check if email exists
     existing_user = db.query(User).filter(User.email == user.email).first()
-
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = hash_password(user.password)
-
     code = generate_verification_code()
 
     new_user = User(
@@ -37,22 +42,34 @@ async def register(user: RegisterUser, db: Session = Depends(get_db)):
         email=user.email,
         phone=user.phone,
         password=hashed_password,
-
-        verification_code = code,
-        verification_expires = datetime.utcnow() + timedelta(minutes=10),
-
-        is_active = True,
-        is_verified= False,
-        is_admin = False
+        verification_code=code,
+        verification_expires=datetime.utcnow() + timedelta(minutes=10),
+        is_active=True,
+        is_verified=False,
+        is_admin=False
     )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
+    # Notify Academy API to create the user record
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{ACADEMY_API_URL}/users/register",
+                json={"daia_user_id": str(new_user.id)},
+                headers={"X-Internal-Secret": INTERNAL_SECRET},
+                timeout=5.0,
+            )
+    except httpx.RequestError:
+        # Don't fail the registration if Academy API is unreachable
+        # You can add logging here later
+        pass
+
     await send_verification_email(user.email, code)
 
-    return {"message": "User registered successfully"}  
+    return {"message": "User registered successfully"}
 
 @router.post("/login")
 def login(
@@ -147,3 +164,34 @@ async def resend_verification(email: str, db: Session = Depends(get_db)):
     await send_verification_email(user.email, code)
 
     return {"message": "Verification email resent"}
+
+@router.post("/request-email-change")
+async def request_email_change(
+    payload: RequestEmailChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # verify password
+    if not verify_password(payload.password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Password is incorrect")
+
+    # check if email already exists
+    existing = db.query(User).filter(User.email == payload.new_email).first()
+
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already in use")
+
+    # generate verification code
+    code = generate_verification_code()
+
+    # store pending email change
+    current_user.pending_email = payload.new_email
+    current_user.email_verification_code = code
+
+    db.commit()
+
+    # send verification email
+    await send_verification_email(payload.new_email, code)
+
+    return {"message": "Verification email sent"}

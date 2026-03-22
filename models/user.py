@@ -1,10 +1,18 @@
+import uuid
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.dialects.postgresql import UUID
 from database import Base
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+
 
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
@@ -22,3 +30,7 @@ class User(Base):
 
     verification_code = Column(String, nullable=True)
     verification_expires = Column(DateTime, nullable=True)
+
+    pending_email = Column(String, nullable=True)
+    email_verification_code = Column(String, nullable=True)
+    email_verification_expires = Column(DateTime, nullable=True)
