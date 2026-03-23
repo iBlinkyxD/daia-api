@@ -17,10 +17,10 @@ conf = ConnectionConfig(
 async def send_verification_email(email: str, code: str, purpose: str = "verify"):
 
     if purpose == "verify":
-        verify_link = f"{FRONTEND_URL}/verify?email={email}&code={code}"
+        verify_link = f"https://daia-landing.netlify.app/verify?email={email}&code={code}"
 
     elif purpose == "change_email":
-        verify_link = f"{FRONTEND_URL}/verify-email-change?email={email}&code={code}"
+        verify_link = f"https://daia-landing.netlify.app/verify-email-change?email={email}&code={code}"
 
     html_content = f"""
     <html>
