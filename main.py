@@ -10,6 +10,10 @@ origins = [
     "http://localhost:8080",  # landing
     "http://localhost:8081",  # hub
     "http://localhost:8082",  # academy
+
+    "https://daia-landing.netlify.app",
+    "https://daia-hub-app.netlify.app",
+    "https://daia-academy-app.netlify.app",
 ]
 
 app.add_middleware(
