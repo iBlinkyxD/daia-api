@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,7 +8,7 @@ from routes import auth, users
 
 app = FastAPI()
 
-origins = [
+_default_origins = [
     "http://localhost:8080",  # landing
     "http://localhost:8081",  # hub
     "http://localhost:8082",  # academy
@@ -15,6 +17,13 @@ origins = [
     "https://daia-hub-app.netlify.app",
     "https://daia-academy-app.netlify.app",
 ]
+
+_cors_env = os.getenv("CORS_ORIGINS", "").strip()
+origins = (
+    [o.strip() for o in _cors_env.split(",") if o.strip()]
+    if _cors_env
+    else _default_origins
+)
 
 app.add_middleware(
     CORSMiddleware,

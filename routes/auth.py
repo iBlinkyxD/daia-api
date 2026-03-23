@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
-import random;
-import os
+import random
 import httpx
 
 from sqlalchemy.orm import Session
@@ -18,11 +17,9 @@ from utils.security import hash_password, verify_password
 from utils.jwt import create_access_token
 from utils.verification import generate_verification_code
 from utils.email import send_verification_email
+from config import ACADEMY_API_URL, COOKIE_SECURE, INTERNAL_SECRET
 
 router = APIRouter()
-
-ACADEMY_API_URL = os.getenv("ACADEMY_API_URL", "http://localhost:8001")
-INTERNAL_SECRET = os.getenv("INTERNAL_SECRET")
 
 
 @router.post("/register")

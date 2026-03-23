@@ -4,7 +4,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from database import Base
 
 class User(Base):
-    __tablename__ = "users"
+    # Tabla distinta de Academy `users` (shadow con daia_user_id). Evita mezclar esquemas en la misma tabla.
+    __tablename__ = "auth_users"
 
     id = Column(
         UUID(as_uuid=True),
