@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from uuid import UUID
 
 class RegisterUser(BaseModel):
     first_name: str
@@ -20,7 +21,7 @@ class UpdateProfileRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: int
+    id: UUID
     first_name: str
     last_name: str
     email: EmailStr

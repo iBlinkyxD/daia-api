@@ -11,7 +11,7 @@ _academy_override = os.getenv("ACADEMY_API_URL", "").strip().rstrip("/")
 if _academy_override:
     ACADEMY_API_URL = _academy_override
 elif _env in ("production", "prod"):
-    ACADEMY_API_URL = "https://academy.nss.lat"
+    ACADEMY_API_URL = "web-production-ea951.up.railway.app"
 else:
     ACADEMY_API_URL = "http://localhost:8001"
 
