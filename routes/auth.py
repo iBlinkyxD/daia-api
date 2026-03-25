@@ -91,13 +91,12 @@ def login(
 
     token = create_access_token(db_user.id)
 
-    # ✅ Set cookie without domain for localhost dev
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,        # True in production
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite="none" if COOKIE_SECURE else "lax",
         max_age=60*60*24     # 1 day
     )
 
@@ -112,10 +111,11 @@ def login(
 
 @router.post("/logout")
 def logout(response: Response):
-    # ✅ Remove domain for localhost dev
     response.delete_cookie(
         key="access_token",
         path="/",
+        secure=COOKIE_SECURE,
+        samesite="none" if COOKIE_SECURE else "lax",
     )
     return {"message": "Logged out successfully"}
 
