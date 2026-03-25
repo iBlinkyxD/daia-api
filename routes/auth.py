@@ -101,6 +101,7 @@ def login(
     )
 
     return {
+        "access_token": token,
         "user": {
             "id": db_user.id,
             "email": db_user.email,
