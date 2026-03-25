@@ -36,5 +36,14 @@ app.add_middleware(
 # Create tables in PostgreSQL
 Base.metadata.create_all(bind=engine)
 
+# Apply any column additions that create_all won't handle on existing tables
+with engine.connect() as conn:
+    conn.execute(
+        __import__("sqlalchemy").text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR UNIQUE"
+        )
+    )
+    conn.commit()
+
 app.include_router(auth.router)
 app.include_router(users.router)
