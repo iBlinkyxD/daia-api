@@ -1,23 +1,41 @@
+import re
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 from database import get_db
-
 from models.user import User
-from schemas.user import UpdateProfileRequest, UserResponse, ChangePasswordRequest
-
+from schemas.user import UpdateProfileRequest, UserResponse, ChangePasswordRequest, PublicProfileResponse
 from utils.auth import get_current_user
 from utils.security import verify_password, hash_password
-
 from services.storage import upload_avatar
 
-import uuid
-
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+def generate_unique_username(first_name: str, last_name: str, db: Session) -> str:
+    base = re.sub(r"[^a-z0-9]", "", f"{first_name}{last_name}".lower())
+    username = base
+    counter = 2
+    while db.query(User).filter(User.username == username).first():
+        username = f"{base}{counter}"
+        counter += 1
+    return username
+
 
 @router.get("/me")
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/profile/{username}", response_model=PublicProfileResponse)
+def get_public_profile(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return user
+
 
 @router.put("/me", response_model=UserResponse)
 def update_profile(
@@ -25,7 +43,6 @@ def update_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
     if payload.first_name:
         current_user.first_name = payload.first_name
 
@@ -39,6 +56,7 @@ def update_profile(
     db.refresh(current_user)
 
     return current_user
+
 
 @router.post("/me/avatar")
 async def upload_my_avatar(
@@ -66,7 +84,6 @@ def change_password(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
     if not verify_password(payload.current_password, current_user.password):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
 

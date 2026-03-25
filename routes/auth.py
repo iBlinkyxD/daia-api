@@ -17,6 +17,7 @@ from utils.security import hash_password, verify_password
 from utils.jwt import create_access_token
 from utils.verification import generate_verification_code
 from utils.email import send_verification_email
+from routes.users import generate_unique_username
 from config import ACADEMY_API_URL, COOKIE_SECURE, INTERNAL_SECRET
 
 router = APIRouter()
@@ -33,12 +34,15 @@ async def register(user: RegisterUser, db: Session = Depends(get_db)):
     hashed_password = hash_password(user.password)
     code = generate_verification_code()
 
+    username = generate_unique_username(user.first_name, user.last_name, db)
+
     new_user = User(
         first_name=user.first_name,
         last_name=user.last_name,
         email=user.email,
         phone=user.phone,
         password=hashed_password,
+        username=username,
         verification_code=code,
         verification_expires=datetime.utcnow() + timedelta(minutes=10),
         is_active=True,

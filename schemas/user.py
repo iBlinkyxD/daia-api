@@ -26,10 +26,22 @@ class UserResponse(BaseModel):
     last_name: str
     email: EmailStr
     phone: str
+    username: Optional[str]
     profile_picture_url: Optional[str]
 
     class Config:
         from_attributes = True
+
+
+class PublicProfileResponse(BaseModel):
+    first_name: str
+    last_name: str
+    username: str
+    profile_picture_url: Optional[str]
+
+    class Config:
+        from_attributes = True
+
 
 class ChangePasswordRequest(BaseModel):
     current_password: str

@@ -1,62 +1,46 @@
 import os
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+import asyncio
+import resend
 from config import FRONTEND_URL
 
-conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=587,
-    MAIL_SERVER="smtp.gmail.com",
-    MAIL_STARTTLS=True,
-    MAIL_SSL_TLS=False,
-    USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True
-)
+resend.api_key = os.getenv("RESEND_API_KEY", "")
+MAIL_FROM = os.getenv("MAIL_FROM", "noreply@verify.daia.do")
+
 
 async def send_verification_email(email: str, code: str, purpose: str = "verify"):
-
     if purpose == "verify":
         verify_link = f"{FRONTEND_URL}/verify?email={email}&code={code}"
-
     elif purpose == "change_email":
         verify_link = f"{FRONTEND_URL}/verify-email-change?email={email}&code={code}"
+    else:
+        verify_link = f"{FRONTEND_URL}/verify?email={email}&code={code}"
 
     html_content = f"""
     <html>
-        <body>
-            <h2>Email Verification</h2>
-
+        <body style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 16px;">
+            <h2 style="margin-bottom:8px;">Email Verification</h2>
             <p>Your verification code is:</p>
-
-            <h1 style="letter-spacing:4px;">{code}</h1>
-
+            <h1 style="letter-spacing:8px;font-size:40px;margin:16px 0;">{code}</h1>
             <p>Or click the button below:</p>
-
             <a href="{verify_link}"
-               style="
-               display:inline-block;
-               padding:12px 20px;
-               background-color:#2563eb;
-               color:white;
-               text-decoration:none;
-               border-radius:6px;">
-               Verify
+               style="display:inline-block;padding:12px 24px;background-color:#2563eb;
+                      color:white;text-decoration:none;border-radius:6px;font-weight:600;">
+               Verify Email
             </a>
-
-            <p>If the button doesn't work:</p>
-            <p>{verify_link}</p>
-
+            <p style="margin-top:24px;color:#6b7280;font-size:14px;">
+                If the button doesn't work, copy and paste this link:<br/>
+                <a href="{verify_link}" style="color:#2563eb;">{verify_link}</a>
+            </p>
+            <p style="color:#6b7280;font-size:12px;">This code expires in 10 minutes.</p>
         </body>
     </html>
     """
 
-    message = MessageSchema(
-        subject="Verify your account",
-        recipients=[email],
-        body=html_content,
-        subtype="html"
-    )
+    params: resend.Emails.SendParams = {
+        "from": MAIL_FROM,
+        "to": [email],
+        "subject": "Verify your account",
+        "html": html_content,
+    }
 
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    await asyncio.to_thread(resend.Emails.send, params)

@@ -19,11 +19,13 @@ class User(Base):
 
     email = Column(String, unique=True, index=True, nullable=False)
     phone = Column(String, nullable=False)
-    
+
     password = Column(String, nullable=False)
 
+    username = Column(String, unique=True, index=True, nullable=True)
+
     profile_picture_url = Column(String, nullable=True)
-    
+
     is_active = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
