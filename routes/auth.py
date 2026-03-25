@@ -92,8 +92,8 @@ def login(
         key="access_token",
         value=token,
         httponly=True,
-        secure=True,        # True in production
-        samesite="none",
+        secure=False,        # True in production
+        samesite="lax",
         max_age=60*60*24     # 1 day
     )
 

@@ -5,7 +5,7 @@ from database import Base
 
 class User(Base):
     # Tabla distinta de Academy `users` (shadow con daia_user_id). Evita mezclar esquemas en la misma tabla.
-    __tablename__ = "auth_users"
+    __tablename__ = "users"
 
     id = Column(
         UUID(as_uuid=True),
@@ -13,7 +13,6 @@ class User(Base):
         default=uuid.uuid4,
         index=True
     )
-
 
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
