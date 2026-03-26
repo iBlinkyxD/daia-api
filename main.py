@@ -9,13 +9,12 @@ from routes import auth, users
 app = FastAPI()
 
 _default_origins = [
-    "http://localhost:8080",  # landing
-    "http://localhost:8081",  # hub
-    "http://localhost:8082",  # academy
-
-    "https://daia-landing.netlify.app",
-    "https://daia-hub-app.netlify.app",
-    "https://daia-academy-app.netlify.app",
+    "http://localhost:8080",
+    "http://localhost:8081",
+    "http://localhost:8082",
+    "https://dev-landing.daia.do",
+    "https://dev-hub.daia.do",
+    "https://dev-academy.daia.do",
 ]
 
 _cors_env = os.getenv("CORS_ORIGINS", "").strip()
