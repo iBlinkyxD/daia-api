@@ -18,7 +18,7 @@ from utils.jwt import create_access_token
 from utils.verification import generate_verification_code
 from utils.email import send_verification_email
 from routes.users import generate_unique_username
-from config import ACADEMY_API_URL, COOKIE_SECURE, INTERNAL_SECRET
+from config import ACADEMY_API_URL, COOKIE_SECURE, COOKIE_DOMAIN, INTERNAL_SECRET
 
 router = APIRouter()
 
@@ -97,7 +97,8 @@ def login(
         httponly=True,
         secure=COOKIE_SECURE,
         samesite="none" if COOKIE_SECURE else "lax",
-        max_age=60*60*24     # 1 day
+        max_age=60*60*24,
+        domain=COOKIE_DOMAIN,
     )
 
     return {
@@ -117,6 +118,7 @@ def logout(response: Response):
         path="/",
         secure=COOKIE_SECURE,
         samesite="none" if COOKIE_SECURE else "lax",
+        domain=COOKIE_DOMAIN,
     )
     return {"message": "Logged out successfully"}
 

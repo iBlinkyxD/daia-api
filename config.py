@@ -15,3 +15,4 @@ COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").strip().lower() in (
     "yes",
     "on",
 )
+COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", None)
