@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 import random
+import secrets
 import httpx
 
 from sqlalchemy.orm import Session
@@ -16,7 +17,7 @@ from utils.auth import get_current_user
 from utils.security import hash_password, verify_password
 from utils.jwt import create_access_token
 from utils.verification import generate_verification_code
-from utils.email import send_verification_email
+from utils.email import send_verification_email, send_password_reset_email
 from routes.users import generate_unique_username
 from config import ACADEMY_API_URL, COOKIE_SECURE, COOKIE_DOMAIN, INTERNAL_SECRET
 
@@ -172,6 +173,40 @@ async def resend_verification(email: str, db: Session = Depends(get_db)):
     await send_verification_email(user.email, code)
 
     return {"message": "Verification email resent"}
+
+@router.post("/forgot-password")
+async def forgot_password(email: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == email).first()
+    # Always return 200 to avoid leaking which emails are registered
+    if not user:
+        return {"message": "If that email exists, a reset link has been sent"}
+
+    token = secrets.token_urlsafe(32)
+    user.reset_password_token = token
+    user.reset_password_expires = datetime.utcnow() + timedelta(minutes=15)
+    db.commit()
+
+    await send_password_reset_email(email, token)
+    return {"message": "If that email exists, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.reset_password_token == token).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+
+    if user.reset_password_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Reset link has expired")
+
+    user.password = hash_password(new_password)
+    user.reset_password_token = None
+    user.reset_password_expires = None
+    db.commit()
+
+    return {"message": "Password reset successfully"}
+
 
 @router.post("/request-email-change")
 async def request_email_change(

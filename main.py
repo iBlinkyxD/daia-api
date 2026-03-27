@@ -37,11 +37,10 @@ Base.metadata.create_all(bind=engine)
 
 # Apply any column additions that create_all won't handle on existing tables
 with engine.connect() as conn:
-    conn.execute(
-        __import__("sqlalchemy").text(
-            "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR UNIQUE"
-        )
-    )
+    from sqlalchemy import text
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR UNIQUE"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP"))
     conn.commit()
 
 app.include_router(auth.router)

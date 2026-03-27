@@ -36,3 +36,6 @@ class User(Base):
     pending_email = Column(String, nullable=True)
     email_verification_code = Column(String, nullable=True)
     email_verification_expires = Column(DateTime, nullable=True)
+
+    reset_password_token = Column(String, nullable=True, index=True)
+    reset_password_expires = Column(DateTime, nullable=True)
