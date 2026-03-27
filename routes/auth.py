@@ -59,7 +59,11 @@ async def register(user: RegisterUser, db: Session = Depends(get_db)):
         async with httpx.AsyncClient() as client:
             await client.post(
                 f"{ACADEMY_API_URL}/users/register",
-                json={"daia_user_id": str(new_user.id)},
+                json={
+                    "daia_user_id": str(new_user.id),
+                    "first_name": new_user.first_name,
+                    "last_name": new_user.last_name,
+                },
                 headers={"X-Internal-Secret": INTERNAL_SECRET},
                 timeout=5.0,
             )
