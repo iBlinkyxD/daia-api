@@ -1,6 +1,7 @@
 import re
 import uuid
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
@@ -10,8 +11,27 @@ from schemas.user import UpdateProfileRequest, UserResponse, ChangePasswordReque
 from utils.auth import get_current_user
 from utils.security import verify_password, hash_password
 from services.storage import upload_avatar
+from config import ACADEMY_API_URL, INTERNAL_SECRET
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+async def _sync_profile_to_academy(user: User):
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.patch(
+                f"{ACADEMY_API_URL}/users/sync-profile",
+                json={
+                    "daia_user_id": str(user.id),
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "profile_picture_url": user.profile_picture_url,
+                },
+                headers={"X-Internal-Secret": INTERNAL_SECRET},
+                timeout=5.0,
+            )
+    except Exception:
+        pass  # don't fail the main request if academy sync fails
 
 
 def generate_unique_username(first_name: str, last_name: str, db: Session) -> str:
@@ -38,7 +58,7 @@ def get_public_profile(username: str, db: Session = Depends(get_db)):
 
 
 @router.put("/me", response_model=UserResponse)
-def update_profile(
+async def update_profile(
     payload: UpdateProfileRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -54,6 +74,8 @@ def update_profile(
 
     db.commit()
     db.refresh(current_user)
+
+    await _sync_profile_to_academy(current_user)
 
     return current_user
 
@@ -74,6 +96,8 @@ async def upload_my_avatar(
 
     current_user.profile_picture_url = url
     db.commit()
+
+    await _sync_profile_to_academy(current_user)
 
     return {"avatar_url": url}
 
