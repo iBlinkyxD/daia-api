@@ -28,6 +28,9 @@ class UserResponse(BaseModel):
     phone: str
     username: Optional[str]
     profile_picture_url: Optional[str]
+    is_admin: bool = False
+    is_active: bool = True
+    is_verified: bool = False
 
     class Config:
         from_attributes = True

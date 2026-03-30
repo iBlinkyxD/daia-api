@@ -12,9 +12,11 @@ _default_origins = [
     "http://localhost:8080",
     "http://localhost:8081",
     "http://localhost:8082",
+    "http://localhost:8083",
     "https://dev-landing.daia.do",
     "https://dev-hub.daia.do",
     "https://dev-academy.daia.do",
+    "https://dev-admin.daia.do",
 ]
 
 _cors_env = os.getenv("CORS_ORIGINS", "").strip()
